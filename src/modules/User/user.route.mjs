@@ -3,9 +3,6 @@ import { CONTROLLER } from "./user.controller.mjs";
 
 const app = Router();
 
-app.post("/register", CONTROLLER.register);
-app.delete("/delete/:applicant_id", CONTROLLER.delete);
-app.get("/all", CONTROLLER.all);
-app.get("/:id", CONTROLLER.applicant);
+app.get("/login", CONTROLLER.login);
 
 export default app;

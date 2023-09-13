@@ -17,4 +17,16 @@ function hashPassword(password) {
     });
 }
 
-export { getCurrentDateTime, hashPassword };
+function unHashPassword(password, hashPassword) {
+    return new Promise((resolve, reject) => {
+        bcrypt.compare(password, hashPassword, function (err, result) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result);
+            }
+        });
+    });
+}
+
+export { getCurrentDateTime, hashPassword, unHashPassword };

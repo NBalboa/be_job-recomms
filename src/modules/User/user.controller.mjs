@@ -1,105 +1,57 @@
-import { registerSchema } from "../../configs/validators.mjs";
+import jwt from "jsonwebtoken";
+import { userCredentials, userToken } from "./user.model.mjs";
+import { unHashPassword } from "../../configs/utils.mjs";
+import { adminByUserId } from "../Admin/admin.model.mjs";
+import { loginSchema } from "../../configs/validators.mjs";
 import { errorMessagesObject } from "../../configs/errorMessages.mjs";
-import {
-    registerApplicant,
-    deleteApplicant,
-    getApplicantUserId,
-    allApplicants,
-    applicantById,
-} from "./user.model.mjs";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../configs/secrets.mjs";
 
 export const CONTROLLER = {
-    register: async (req, res) => {
-        const {
-            first_name,
-            last_name,
-            middle_name,
-            email,
-            password,
-            password_confirmation,
-        } = req.body;
+    login: async (req, res) => {
+        const { email, password } = req.body;
 
         try {
-            const value = await registerSchema.validateAsync({
-                first_name: first_name,
-                last_name: last_name,
-                middle_name: middle_name,
+            const value = await loginSchema.validateAsync({
                 email: email,
                 password: password,
-                password_confirmation: password_confirmation,
             });
+            const user_details = await userCredentials(email);
+            console.log(user_details);
+            const isMatch = await unHashPassword(
+                password,
+                user_details[0].password
+            );
+            if (isMatch) {
+                const user = await adminByUserId(user_details[0].id);
 
-            await registerApplicant(value);
-            res.json({
-                message: "Successfully created an account",
-                success: true,
-            });
+                const accessToken = jwt.sign({ email: email }, ACCESS_TOKEN, {
+                    expiresIn: "30m",
+                });
+
+                const refreshToken = jwt.sign({ email: email }, REFRESH_TOKEN, {
+                    expiresIn: "1d",
+                });
+
+                if ((user_details[0].role = "admin")) {
+                    res.json({
+                        user: user[0],
+                        accessToken: accessToken,
+                        msg: "Login Successfully",
+                        success: true,
+                    });
+                }
+            } else {
+                res.json({ msg: "Invalid Email or Passowrd", success: false });
+            }
         } catch (e) {
             if (e.hasOwnProperty("details")) {
                 const errors = errorMessagesObject(e.details);
-                res.json({
-                    message: "User wasn't created",
-                    errors: errors,
-                    success: false,
-                });
-            } else if (e.hasOwnProperty("errno") && e.errno === 1062) {
-                res.json({ errors: "Email already in used", success: false });
-            } else {
-                console.log(e.errno, "Hi");
-                res.json({ errors: e, success: false });
-            }
-        }
-    },
-    delete: async (req, res) => {
-        const { applicant_id } = req.params;
-
-        try {
-            const user_id = await getApplicantUserId(applicant_id);
-            const result = await deleteApplicant(
-                user_id[0].user_id,
-                applicant_id
-            );
-
-            console.user_id;
-
-            res.json({ message: result.message, success: true });
-        } catch (e) {
-            if (e.hasOwnProperty("noExist")) {
-                res.json({ error: e.noExist, success: false });
+                res.json({ errors: errors, success: false });
             } else {
                 res.json({
-                    message: "Failed to delete an applicant",
+                    msg: e,
                     success: false,
                 });
-            }
-        }
-    },
-
-    all: async (req, res) => {
-        try {
-            const data = await allApplicants();
-
-            res.json({ datas: data, success: true });
-        } catch (e) {
-            console.log(e);
-
-            res.json({ error: "Failed to get applicants", success: false });
-        }
-    },
-    applicant: async (req, res) => {
-        const { id } = req.params;
-        console.log(id);
-        // console.log("applicants");
-
-        try {
-            const data = await applicantById(id);
-
-            res.json({ datas: data[0], success: true });
-        } catch (e) {
-            if (e.hasOwnProperty("noExist")) {
-                res.json({ error: e.noExist, success: false });
-            } else {
-                res.json({ error: "Something went wrong", success: false });
             }
         }
     },
