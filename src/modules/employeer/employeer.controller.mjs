@@ -1,8 +1,8 @@
 import { registerSchema } from "../../configs/validators.mjs";
+import { errorMessagesObject } from "../../configs/errorMessages.mjs";
+import { registerEmployeer } from "./employeer.model.mjs";
 import { checkErrors } from "../../configs/utils.mjs";
-import { registerAdmin } from "./admin.model.mjs";
-
-export const CONTROLLER = {
+const CONTROLLER = {
     register: async (req, res) => {
         const {
             first_name,
@@ -12,7 +12,7 @@ export const CONTROLLER = {
             password,
             password_confirmation,
         } = req.body;
-        // await registerAdmin("value");
+
         try {
             const value = await registerSchema.validateAsync({
                 first_name: first_name,
@@ -23,18 +23,18 @@ export const CONTROLLER = {
                 password_confirmation: password_confirmation,
             });
 
-            await registerAdmin(value);
+            await registerEmployeer(value);
 
-            res.json({ msg: "Admin was created successfully", success: true });
+            res.json({ msg: "Success register Employeee", success: true });
         } catch (e) {
             const error = checkErrors(e);
             res.json({
-                msg: "Failed to create admin",
+                msg: "Failed to create employeer",
                 error: error,
                 success: false,
             });
         }
-
-        // res.json({ msg: "Hi admin" });
     },
 };
+
+export { CONTROLLER };

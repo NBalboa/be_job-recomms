@@ -1,13 +1,22 @@
 import { connection } from "../../configs/database.mjs";
-import { getCurrentDateTime } from "../../configs/utils.mjs";
+import { generateID, getCurrentDateTime } from "../../configs/utils.mjs";
 import { hashPassword } from "../../configs/utils.mjs";
+import { totalUsers } from "../user/user.model.mjs";
 
 async function registerApplicant(data) {
     const role = "applicant";
-
-    const password = await hashPassword(data.password);
+    const [total_applicants, total_users, password] = await Promise.all([
+        totalApplicants(),
+        totalUsers(),
+        hashPassword(data.password),
+    ]);
+    const [applicant_id, user_id] = await Promise.all([
+        generateID(total_applicants[0].total_applicants, "APPLICANT"),
+        generateID(total_users[0].total_users, "USER"),
+    ]);
 
     const userData = [
+        user_id,
         data.email,
         password,
         role,
@@ -16,55 +25,60 @@ async function registerApplicant(data) {
     ];
 
     return new Promise((resolve, reject) => {
-        connection.beginTransaction((err) => {
+        connection.connect((err) => {
             if (err) {
                 reject(err);
             }
-            const userSQL =
-                "INSERT INTO users (email, password, role, created_at, updated_at) VALUES(?,?,?,?,?)";
-            const applicantSQL =
-                "INSERT INTO applicants (user_id, first_name, last_name, middle_name, created_at, updated_at) VALUES (?,?,?,?,?,?)";
 
-            connection.query(userSQL, userData, (err, result) => {
+            connection.beginTransaction((err) => {
                 if (err) {
-                    connection.rollback(() => {
-                        reject(err);
-                    });
-                } else {
-                    console.log(err, result);
-                    const applicantData = [
-                        result.insertId,
-                        data.first_name,
-                        data.last_name,
-                        data.middle_name,
-                        getCurrentDateTime(),
-                        getCurrentDateTime(),
-                    ];
-
-                    connection.query(
-                        applicantSQL,
-                        applicantData,
-                        (err, result) => {
-                            if (err) {
-                                console.log(err);
-                                connection.rollback(() => {
-                                    reject(err);
-                                });
-                            } else {
-                                connection.commit((err) => {
-                                    if (err) {
-                                        connection.rollback(() => {
-                                            reject({
-                                                error: err,
-                                            });
-                                        });
-                                    }
-                                    resolve(result);
-                                });
-                            }
-                        }
-                    );
+                    reject(err);
                 }
+                const userSQL =
+                    "INSERT INTO users (id,email, password, role, created_at, updated_at) VALUES(?,?,?,?,?,?)";
+                const applicantSQL =
+                    "INSERT INTO applicants (id, user_id, first_name, last_name, middle_name, created_at, updated_at) VALUES (?,?,?,?,?,?,?)";
+
+                connection.query(userSQL, userData, (err, result) => {
+                    if (err) {
+                        connection.rollback(() => {
+                            reject(err);
+                        });
+                    } else {
+                        // console.log(err, result);
+                        const applicantData = [
+                            applicant_id,
+                            user_id,
+                            data.first_name,
+                            data.last_name,
+                            data.middle_name,
+                            getCurrentDateTime(),
+                            getCurrentDateTime(),
+                        ];
+
+                        connection.query(
+                            applicantSQL,
+                            applicantData,
+                            (err, result) => {
+                                if (err) {
+                                    console.log(err);
+                                    connection.rollback(() => {
+                                        reject(err);
+                                    });
+                                } else {
+                                    connection.commit((err) => {
+                                        if (err) {
+                                            connection.rollback(() => {
+                                                reject(err);
+                                            });
+                                        }
+                                        resolve(result);
+                                    });
+                                }
+                            }
+                        );
+                    }
+                });
             });
         });
     });
@@ -142,7 +156,6 @@ function allApplicants() {
             if (err) {
                 reject(err);
             }
-
             connection.query(query, (err, result) => {
                 if (err) {
                     reject(err);
@@ -177,10 +190,50 @@ function applicantById(id) {
     });
 }
 
+function totalApplicants() {
+    return new Promise((resolve, reject) => {
+        connection.connect((err) => {
+            if (err) {
+                reject(err);
+            }
+            connection.query(
+                "SELECT count(*) as total_applicants FROM applicants",
+                (err, result) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(result);
+                    }
+                }
+            );
+        });
+    });
+}
+
+function applicantByUserId(id) {
+    const query =
+        "SELECT applicants.id, applicants.user_id, applicants.first_name, applicants.last_name, applicants.middle_name, users.email, users.role FROM applicants LEFT JOIN users ON applicants.user_id = users.id WHERE applicants.user_id = ?";
+    return new Promise((resolve, reject) => {
+        connection.connect((err) => {
+            if (err) {
+                reject(err);
+            }
+            connection.query(query, [id], (err, result) => {
+                if (err) {
+                    reject(err);
+                }
+
+                resolve(result);
+            });
+        });
+    });
+}
+
 export {
     registerApplicant,
     deleteApplicant,
     getApplicantUserId,
     allApplicants,
     applicantById,
+    applicantByUserId,
 };

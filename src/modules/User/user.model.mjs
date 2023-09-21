@@ -39,4 +39,44 @@ function userToken(token, id) {
     });
 }
 
-export { userCredentials, userToken };
+function unToken(id) {
+    const query = "UPDATE users SET token = '' WHERE id = ?";
+
+    return new Promise((resolve, reject) => {
+        connection.connect((err) => {
+            if (err) {
+                reject(err);
+            }
+
+            connection.query(query, [id], (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+    });
+}
+
+function totalUsers() {
+    return new Promise((resolve, reject) => {
+        connection.connect((err) => {
+            if (err) {
+                reject(err);
+            }
+            connection.query(
+                "SELECT count(*) as total_users FROM users",
+                (err, result) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(result);
+                    }
+                }
+            );
+        });
+    });
+}
+
+export { userCredentials, userToken, unToken, totalUsers };

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { CONTROLLER } from "./admin.controller.mjs";
+import { CONTROLLER } from "./employeer.controller.mjs";
 
 const app = Router();
 

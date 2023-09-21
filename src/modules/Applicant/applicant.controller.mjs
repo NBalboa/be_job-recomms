@@ -1,5 +1,6 @@
 import { registerSchema } from "../../configs/validators.mjs";
 import { errorMessagesObject } from "../../configs/errorMessages.mjs";
+import { checkErrors } from "../../configs/utils.mjs";
 import {
     registerApplicant,
     deleteApplicant,
@@ -35,18 +36,12 @@ export const CONTROLLER = {
                 success: true,
             });
         } catch (e) {
-            if (e.hasOwnProperty("details")) {
-                const errors = errorMessagesObject(e.details);
-                res.json({
-                    message: "User wasn't created",
-                    errors: errors,
-                    success: false,
-                });
-            } else if (e.hasOwnProperty("errno") && e.errno === 1062) {
-                res.json({ errors: "Email already in used", success: false });
-            } else {
-                res.json({ errors: e, success: false });
-            }
+            const error = checkErrors(e);
+            res.json({
+                msg: "Failed to create an account",
+                error: error,
+                success: false,
+            });
         }
     },
     delete: async (req, res) => {

@@ -3,6 +3,7 @@ import { CONTROLLER } from "./user.controller.mjs";
 
 const app = Router();
 
-app.get("/login", CONTROLLER.login);
+app.post("/login", CONTROLLER.login);
+app.patch("/logout/:id", CONTROLLER.logout);
 
 export default app;
