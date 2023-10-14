@@ -127,6 +127,25 @@ function employeerByUserId(id) {
     });
 }
 
+function employerById(id) {
+    const employerQuery = "SELECT * FROM hiring_managers WHERE id = ?";
+    const data = [id];
+    return new Promise((resolve, reject) => {
+        connection.connect((err) => {
+            if (err) {
+                reject(err);
+            }
+            connection.query(employerQuery, data, (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+    });
+}
+
 function checkEmployerById(id) {
     const query = "SELECT id FROM hiring_managers WHERE id = ?";
 
@@ -148,4 +167,9 @@ function checkEmployerById(id) {
     });
 }
 
-export { registerEmployeer, employeerByUserId, checkEmployerById };
+export {
+    registerEmployeer,
+    employeerByUserId,
+    checkEmployerById,
+    employerById,
+};

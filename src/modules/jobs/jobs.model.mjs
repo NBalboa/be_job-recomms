@@ -103,14 +103,6 @@ async function registerQualifications(jobsId, data) {
             });
         });
     });
-    // console.log(qualificationsData);
-    // const values = data.map(async (description) => {
-    //     const newId = await generateID(oldId, "qualifications");
-    //     oldId++;
-    //     return [newId, description.description, "date"];
-    // });
-
-    // console.log(await values[0]);
 }
 
 function totalJobs() {
@@ -152,6 +144,27 @@ function allJobs() {
     });
 }
 
+function jobById(id) {
+    const jobsQuery =
+        "SELECT jobs.* , CONCAT(hiring_managers.first_name, ' ', hiring_managers.last_name) as employer, hiring_managers.company_name, company_url, hiring_managers.telephone_no, hiring_managers.mobile_no, jobs.created_at, jobs.updated_at FROM jobs LEFT JOIN hiring_managers ON jobs.hiring_manager_id = hiring_managers.id WHERE jobs.id = ?";
+    const data = [id];
+
+    return new Promise((resolve, reject) => {
+        connection.connect((err) => {
+            if (err) {
+                reject(err);
+            }
+            connection.query(jobsQuery, data, (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+    });
+}
+
 function totalQualifications() {
     return new Promise((resolve, reject) => {
         connection.connect((err) => {
@@ -172,4 +185,31 @@ function totalQualifications() {
     });
 }
 
-export { registerJobs, registerQualifications, allJobs };
+function qualificationByJobId(id) {
+    const qualificationQuery = "SELECT * FROM qualifications WHERE job_id = ?";
+    const data = [id];
+
+    return new Promise((resolve, reject) => {
+        connection.connect((err) => {
+            if (err) {
+                reject(err);
+            }
+
+            connection.query(qualificationQuery, data, (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+    });
+}
+
+export {
+    registerJobs,
+    registerQualifications,
+    allJobs,
+    jobById,
+    qualificationByJobId,
+};

@@ -6,10 +6,15 @@ import {
 import { spawn } from "child_process";
 import {
     allJobs,
+    jobById,
+    qualificationByJobId,
     registerJobs,
     registerQualifications,
 } from "./jobs.model.mjs";
-import { checkEmployerById } from "../employeer/employeer.model.mjs";
+import {
+    checkEmployerById,
+    employerById,
+} from "../employeer/employeer.model.mjs";
 // import { DateTime } from "luxon";
 
 // function executeJobRecommendation(script, args) {
@@ -91,6 +96,35 @@ export const CONTROLLER = {
             res.status(404).json({
                 msg: "Something went wrong",
                 error: errors,
+            });
+        }
+    },
+
+    jobDetails: async (req, res) => {
+        const { id } = req.params;
+
+        try {
+            const [jobsData, qualifications] = await Promise.all([
+                jobById(id),
+                qualificationByJobId(id),
+            ]);
+
+            const employerData = await employerById(
+                jobsData[0].hiring_manager_id
+            );
+            const qualificationsData = await qualificationByJobId(id);
+
+            res.status(200).json({
+                job: jobsData[0],
+                employer: employerData[0],
+                qualifications: qualificationsData,
+            });
+        } catch (e) {
+            const errors = checkErrors(e);
+
+            res.status(400).json({
+                msg: "Can't retrieve Job Details",
+                errors: errors,
             });
         }
     },
