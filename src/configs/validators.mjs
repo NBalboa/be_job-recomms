@@ -1,21 +1,116 @@
-import joi from "joi";
+import yup from "yup";
 
-const registerSchema = joi
-    .object({
-        first_name: joi.string().required(),
-        last_name: joi.string().required(),
-        middle_name: joi.string(),
-        email: joi.string().email().required(),
-        password: joi.string().required(),
-        password_confirmation: joi.ref("password"),
-    })
-    .options({ abortEarly: false });
+const registerSchema = yup.object().shape({
+    first_name: yup.string().required("Please Enter First Name"),
+    last_name: yup.string().required("Please Enter Last Name"),
+    middle_name: yup.string(),
+    email: yup
+        .string()
+        .email("Please Enter Valid Email")
+        .required("Please Enter Email"),
+    password: yup
+        .string()
+        .required("Password is required")
+        .min(8, "Password must be at least 8 characters long"),
+    password_confirmation: yup
+        .string()
+        .required("Confirm Password is required")
+        .oneOf([yup.ref("password"), null], "Passwords must be match"),
+});
 
-const loginSchema = joi
-    .object({
-        email: joi.string().required(),
-        password: joi.string().required(),
-    })
-    .options({ abortEarly: false });
+const employerRegisterSchema = yup.object().shape({
+    first_name: yup.string().required("Please Enter First Name"),
+    last_name: yup.string().required("Please Enter Last Name"),
+    middle_name: yup.string(),
+    email: yup
+        .string()
+        .email("Please Enter Valid Email")
+        .required("Please Enter Email"),
+    password: yup
+        .string()
+        .required("Password is required")
+        .min(8, "Password must be at least 8 characters long"),
+    password_confirmation: yup
+        .string()
+        .required("Confirm Password is required")
+        .oneOf([yup.ref("password"), null], "Passwords must be match"),
+    company_name: yup.string().required("Company name required"),
+    company_url: yup.string(),
+    mobile_no: yup.string().required("Mobile No. required"),
+    telephone_no: yup.string().required("Telephone No. required"),
+});
 
-export { registerSchema, loginSchema };
+const loginSchema = yup.object().shape({
+    email: yup.string().required("Please Enter  Email").email("Invalid Email"),
+    password: yup.string().required("Please Enter Password"),
+});
+
+const companyRegisterSchema = yup.object().shape({
+    owner_name: yup
+        .string()
+        .required("President's/Owner's name of the Company is Required "),
+    bussiness_name: yup.string().required("Bussiness is is Required"),
+    trade_name: yup.string(),
+    tin: yup.string().required("Company's TIN is Required"),
+    acronym: yup
+        .string()
+        .required("Acronym/Abbreviations of the Company is Required"),
+    employer_type: yup.string().required("Employer Type is Required"),
+    total_workforce: yup.string().required("Total Work Force is Required"),
+    major_industry_group: yup.string().required("Major Industry is Required"),
+    street: yup.string().required("Street is Required"),
+    barangay: yup.string().required("Barangay is Required"),
+    municipality: yup.string().required("City/Municipality is Required"),
+    province: yup.string().required("Province is Required"),
+});
+
+const jobRegisterSchema = yup.object().shape({
+    position: yup.string().required("Position required"),
+    description: yup.string().required("Description required"),
+    nature_of_work: yup.string().required("Nature of Work Required"),
+    place_of_work: yup.string().required("Place of Work Required"),
+    salary: yup
+        .number("Must be a number")
+        .required("Salary is Required")
+        .positive(),
+    vacancies: yup
+        .number("Must be a number")
+        .required("Vacancies is required")
+        .positive()
+        .integer(),
+    posting_date: yup.date("Invalid date").required("Posting date is required"),
+    valid_until: yup.date("Invalid date").required("Valid until is required"),
+});
+
+yup.addMethod(yup.array, "arrayOfStrings", function (customErrorMessage) {
+    const defaultErrorMsg =
+        "${path} must not be empty and contain only strings";
+    const errorMsg = customErrorMessage || defaultErrorMsg;
+    return this.test({
+        name: "arrayOfStrings",
+        message: errorMsg,
+        test: function (value) {
+            if (!Array.isArray(value) || value.length === 0) {
+                return false;
+            }
+            return value.every((element) => typeof element === "string");
+        },
+    });
+});
+
+const qualificationsSchema = yup.object().shape({
+    descriptions: yup
+        .array()
+        .arrayOfStrings(
+            "Qualifications must be not empty and contain only strings"
+        ),
+});
+
+export {
+    registerSchema,
+    loginSchema,
+    companyRegisterSchema,
+    employerRegisterSchema,
+    jobRegisterSchema,
+    qualificationsSchema,
+};

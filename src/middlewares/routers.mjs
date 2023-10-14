@@ -1,12 +1,15 @@
-import APPLICANT from "../modules/applicant/applicant.route.mjs";
-import ADMIN from "../modules/admin/admin.route.mjs";
-import USER from "../modules/user/user.route.mjs";
-import EMPLOYEER from "../modules/employeer/employeer.route.mjs";
+import APPLICANTS from "../modules/applicant/applicant.route.mjs";
+import ADMINS from "../modules/admin/admin.route.mjs";
+import USERS from "../modules/user/user.route.mjs";
+import EMPLOYERS from "../modules/employeer/employeer.route.mjs";
+import JOBS from "../modules/jobs/jobs.route.mjs";
+
 const routers = (app) => {
-    app.use("/applicant", APPLICANT);
-    app.use("/admin", ADMIN);
-    app.use("/user", USER);
-    app.use("/employeer", EMPLOYEER);
+    app.use("/applicants", APPLICANTS);
+    app.use("/admins", ADMINS);
+    app.use("/users", USERS);
+    app.use("/employers", EMPLOYERS);
+    app.use("/jobs", JOBS);
 };
 
 export { routers };

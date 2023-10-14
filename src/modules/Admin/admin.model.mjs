@@ -15,8 +15,8 @@ async function registerAdmin(data) {
     ]);
 
     const [user_id, admin_id] = await Promise.all([
-        generateID(total_users[0].total_users, "USER"),
-        generateID(total_admins[0].total_admins, "ADMIN"),
+        generateID(total_users[0].total_users, "user"),
+        generateID(total_admins[0].total_admins, "admin"),
     ]);
 
     const userData = [

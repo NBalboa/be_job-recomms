@@ -1,5 +1,5 @@
 import { registerSchema } from "../../configs/validators.mjs";
-import { errorMessagesObject } from "../../configs/errorMessages.mjs";
+// import { errorMessagesObject } from "../../configs/errorMessages.mjs";
 import { checkErrors } from "../../configs/utils.mjs";
 import {
     registerApplicant,
@@ -21,14 +21,17 @@ export const CONTROLLER = {
         } = req.body;
 
         try {
-            const value = await registerSchema.validateAsync({
-                first_name: first_name,
-                last_name: last_name,
-                middle_name: middle_name,
-                email: email,
-                password: password,
-                password_confirmation: password_confirmation,
-            });
+            const value = await registerSchema.validate(
+                {
+                    first_name: first_name,
+                    last_name: last_name,
+                    middle_name: middle_name,
+                    email: email,
+                    password: password,
+                    password_confirmation: password_confirmation,
+                },
+                { abortEarly: false }
+            );
 
             await registerApplicant(value);
             res.json({
@@ -37,7 +40,7 @@ export const CONTROLLER = {
             });
         } catch (e) {
             const error = checkErrors(e);
-            res.json({
+            res.status(422).json({
                 msg: "Failed to create an account",
                 error: error,
                 success: false,
@@ -53,8 +56,6 @@ export const CONTROLLER = {
                 user_id[0].user_id,
                 applicant_id
             );
-
-            console.user_id;
 
             res.json({ message: result.message, success: true });
         } catch (e) {

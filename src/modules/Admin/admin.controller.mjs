@@ -14,23 +14,27 @@ export const CONTROLLER = {
         } = req.body;
         // await registerAdmin("value");
         try {
-            const value = await registerSchema.validateAsync({
-                first_name: first_name,
-                last_name: last_name,
-                middle_name: middle_name,
-                email: email,
-                password: password,
-                password_confirmation: password_confirmation,
-            });
+            const value = await registerSchema.validate(
+                {
+                    first_name: first_name,
+                    last_name: last_name,
+                    middle_name: middle_name,
+                    email: email,
+                    password: password,
+                    password_confirmation: password_confirmation,
+                },
+                { abortEarly: false, strict: true }
+            );
 
             await registerAdmin(value);
 
             res.json({ msg: "Admin was created successfully", success: true });
         } catch (e) {
-            const error = checkErrors(e);
-            res.json({
+            const errors = checkErrors(e);
+
+            res.status(422).json({
                 msg: "Failed to create admin",
-                error: error,
+                error: errors,
                 success: false,
             });
         }

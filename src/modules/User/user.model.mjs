@@ -12,6 +12,9 @@ function userCredentials(email) {
                 if (err) {
                     reject(err);
                 } else {
+                    if (result.length === 0) {
+                        reject({ register: "You don't have an account" });
+                    }
                     resolve(result);
                 }
             });

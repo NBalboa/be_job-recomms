@@ -3,7 +3,7 @@ import { unToken, userCredentials, userToken } from "./user.model.mjs";
 import { unHashPassword } from "../../configs/utils.mjs";
 import { adminByUserId } from "../admin/admin.model.mjs";
 import { loginSchema } from "../../configs/validators.mjs";
-import { errorMessagesObject } from "../../configs/errorMessages.mjs";
+import { checkErrors } from "../../configs/utils.mjs";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../configs/secrets.mjs";
 import { employeerByUserId } from "../employeer/employeer.model.mjs";
 import { applicantByUserId } from "../applicant/applicant.model.mjs";
@@ -13,17 +13,23 @@ export const CONTROLLER = {
         const { email, password } = req.body;
 
         try {
-            const value = await loginSchema.validateAsync({
-                email: email,
-                password: password,
-            });
+            const value = await loginSchema.validate(
+                {
+                    email: email,
+                    password: password,
+                },
+                { abortEarly: false }
+            );
+
             const user_details = await userCredentials(email);
+            console.log(user_details);
             const isMatch = await unHashPassword(
                 password,
                 user_details[0].password
             );
-
-            if (isMatch) {
+            if (user_details.length === 0) {
+                res.json({ msg: "Register", success: false });
+            } else if (isMatch) {
                 const accessToken = jwt.sign({ email: email }, ACCESS_TOKEN, {
                     expiresIn: "30m",
                 });
@@ -63,15 +69,23 @@ export const CONTROLLER = {
                 res.json({ msg: "Invalid Email or Password", success: false });
             }
         } catch (e) {
-            if (e.hasOwnProperty("details")) {
-                const errors = errorMessagesObject(e.details);
-                res.json({ errors: errors, success: false });
-            } else {
-                res.json({
-                    msg: e,
-                    success: false,
-                });
-            }
+            const errors = checkErrors(e);
+
+            res.status(422).json({
+                msg: "Failed to Login",
+                error: errors,
+                success: false,
+            });
+            // res.status(422).json({ error: errors });
+            // if (e.hasOwnProperty("details")) {
+            //     const errors = errorMessagesObject(e.details);
+            //     res.json({ errors: errors, success: false });
+            // } else {
+            //     res.json({
+            //         msg: e,
+            //         success: false,
+            //     });
+            // }
         }
     },
 

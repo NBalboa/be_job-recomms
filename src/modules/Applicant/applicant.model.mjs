@@ -11,8 +11,8 @@ async function registerApplicant(data) {
         hashPassword(data.password),
     ]);
     const [applicant_id, user_id] = await Promise.all([
-        generateID(total_applicants[0].total_applicants, "APPLICANT"),
-        generateID(total_users[0].total_users, "USER"),
+        generateID(total_applicants[0].total_applicants, "applicant"),
+        generateID(total_users[0].total_users, "user"),
     ]);
 
     const userData = [

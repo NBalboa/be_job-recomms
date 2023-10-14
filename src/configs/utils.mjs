@@ -1,11 +1,25 @@
-import moment from "moment";
+import { DateTime } from "luxon";
 import bcrypt from "bcrypt";
 import { SALT_ROUNDS } from "./secrets.mjs";
-import { errorMessagesObject } from "./errorMessages.mjs";
+import { yupErrorsMap } from "./errorMessages.mjs";
 const getCurrentDateTime = () => {
-    return moment().format("YYYY-MM-DD HH:mm:ss");
+    return DateTime.now().toFormat("yyyy-MM-dd HH:mm:ss");
 };
 
+function formatDateToSQLDateTime(date) {
+    return DateTime.fromISO(date).toFormat("yyyy-MM-dd HH:mm:ss");
+}
+
+function checksValidDate(date) {
+    const luxonDate = DateTime.fromISO(date);
+    return new Promise((resolve, reject) => {
+        if (luxonDate.isValid) {
+            resolve(luxonDate);
+        } else {
+            reject({ invalidDate: "Invalid Date" });
+        }
+    });
+}
 function hashPassword(password) {
     return new Promise((resolve, reject) => {
         bcrypt.hash(password, SALT_ROUNDS, (err, hash) => {
@@ -34,20 +48,21 @@ function generateID(id, user_type) {
     id++;
     return new Promise((resolve) => {
         const formattedId = id.toString().padStart(5, "0");
-        const generateId = `PAGA-${user_type}-${formattedId}`;
+        const currentDate = DateTime.now().toLocaleString().replaceAll("/", "");
+        const generateId = `${user_type}-${currentDate}${formattedId}`;
         resolve(generateId);
     });
 }
 
-function checkErrors(e) {
-    console.log(e);
-    if (e.hasOwnProperty("details")) {
-        const errors = errorMessagesObject(e.details);
+function checkErrors(errors) {
+    if (errors.inner?.length > 0) {
+        return yupErrorsMap(errors);
+    } else if (errors.hasOwnProperty("errno") && errors.errno === 1062) {
+        return { used_email: "Email Already in used" };
+    } else if (errors.register) {
         return errors;
-    } else if (e.hasOwnProperty("errno") && e.errno === 1062) {
-        return "Email Already in used";
     } else {
-        return e;
+        return errors;
     }
 }
 
@@ -57,4 +72,6 @@ export {
     unHashPassword,
     generateID,
     checkErrors,
+    formatDateToSQLDateTime,
+    checksValidDate,
 };

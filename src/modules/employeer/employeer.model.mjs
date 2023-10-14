@@ -8,6 +8,7 @@ import { connection } from "../../configs/database.mjs";
 
 async function registerEmployeer(data) {
     const role = "employeer";
+    const currentDateTime = getCurrentDateTime();
     const [total_employeers, total_users, password] = await Promise.all([
         totalEmployeers(),
         totalUsers(),
@@ -15,8 +16,8 @@ async function registerEmployeer(data) {
     ]);
 
     const [user_id, employeer_id] = await Promise.all([
-        generateID(total_users[0].total_users, "USER"),
-        generateID(total_employeers[0].total_employeers, "EMPLOYEER"),
+        generateID(total_users[0].total_users, "user"),
+        generateID(total_employeers[0].total_employeers, "employer"),
     ]);
 
     const userData = [
@@ -24,44 +25,46 @@ async function registerEmployeer(data) {
         data.email,
         password,
         role,
-        getCurrentDateTime(),
-        getCurrentDateTime(),
+        currentDateTime,
+        currentDateTime,
     ];
+
+    const employeerData = [
+        employeer_id,
+        user_id,
+        data.first_name,
+        data.last_name,
+        data.middle_name,
+        data.telephone_no,
+        data.mobile_no,
+        data.company_name,
+        data.company_url,
+        currentDateTime,
+        currentDateTime,
+    ];
+
+    const userSQL =
+        "INSERT INTO users (id,email, password, role, created_at, updated_at) VALUES(?,?,?,?,?,?)";
+    const employeerSQL =
+        "INSERT INTO hiring_managers (id ,user_id, first_name, last_name, middle_name, telephone_no, mobile_no, company_name, company_url, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 
     return new Promise((resolve, reject) => {
         connection.beginTransaction((err) => {
             if (err) {
                 reject(err);
             }
-            const userSQL =
-                "INSERT INTO users (id,email, password, role, created_at, updated_at) VALUES(?,?,?,?,?,?)";
-            const employeerSQL =
-                "INSERT INTO hiring_managers (id ,user_id, first_name, last_name, middle_name, created_at, updated_at) VALUES (?,?,?,?,?,?,?)";
 
             connection.query(userSQL, userData, (err, result) => {
                 if (err) {
                     connection.rollback(() => {
                         reject(err);
                     });
-                    console.log(result);
                 } else {
-                    console.log(err, result);
-                    const employeerData = [
-                        employeer_id,
-                        user_id,
-                        data.first_name,
-                        data.last_name,
-                        data.middle_name,
-                        getCurrentDateTime(),
-                        getCurrentDateTime(),
-                    ];
-
                     connection.query(
                         employeerSQL,
                         employeerData,
                         (err, result) => {
                             if (err) {
-                                console.log(err);
                                 connection.rollback(() => {
                                     reject(err);
                                 });
@@ -124,4 +127,25 @@ function employeerByUserId(id) {
     });
 }
 
-export { registerEmployeer, employeerByUserId };
+function checkEmployerById(id) {
+    const query = "SELECT id FROM hiring_managers WHERE id = ?";
+
+    return new Promise((resolve, reject) => {
+        connection.connect((err) => {
+            if (err) {
+                reject(err);
+            }
+            connection.query(query, [id], (err, result) => {
+                if (err) {
+                    reject(err);
+                } else if (result.length === 0) {
+                    reject({ not_exist: "Employer not found" });
+                } else {
+                    resolve(result.length);
+                }
+            });
+        });
+    });
+}
+
+export { registerEmployeer, employeerByUserId, checkEmployerById };

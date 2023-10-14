@@ -1,2 +1,4 @@
 node_modules/
 .env
+src/modules/jobs/jobs_training.py
+src/modules/jobs/dice_com-job_us_sample.csv
