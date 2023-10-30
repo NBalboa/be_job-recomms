@@ -98,7 +98,7 @@ yup.addMethod(yup.array, "arrayOfStrings", function (customErrorMessage) {
     });
 });
 
-const qualificationsSchema = yup.object().shape({
+const arraysDataSchema = yup.object().shape({
     descriptions: yup
         .array()
         .arrayOfStrings(
@@ -106,11 +106,47 @@ const qualificationsSchema = yup.object().shape({
         ),
 });
 
+const applicantSkillsSchema = yup.object().shape({
+    descriptions: yup
+        .array()
+        .arrayOfStrings(
+            "Qualifications must be not empty and contain only strings"
+        ),
+});
+
+const applicantAddressSchema = yup.object().shape({
+    street: yup.string().required("House No./Street is required"),
+    purok: yup.string().required("Purok is required"),
+    barangay: yup.string().required("Barangay is required"),
+    municipality: yup.string().required("City/Municipality is required"),
+    province: yup.string(),
+});
+
+const applicantEducationSchema = yup.object().shape({
+    school: yup.string().required("School is required"),
+    course: yup.string(),
+    description: yup.string(),
+    start_year: yup.string().required("Start Year is required"),
+    end_year: yup.string().required("Start Year is Required"),
+});
+
+const applicantExperienceSchema = yup.object().shape({
+    title: yup.string().required("Title is Required"),
+    company: yup.string().required("Company is Required"),
+    description: yup.string(),
+    start_date: yup.string().required("Start Date is Required"),
+    end_date: yup.string().required("Start Date is Required"),
+});
+
 export {
+    applicantAddressSchema,
+    applicantEducationSchema,
+    applicantExperienceSchema,
     registerSchema,
     loginSchema,
     companyRegisterSchema,
     employerRegisterSchema,
     jobRegisterSchema,
-    qualificationsSchema,
+    arraysDataSchema,
+    applicantSkillsSchema,
 };

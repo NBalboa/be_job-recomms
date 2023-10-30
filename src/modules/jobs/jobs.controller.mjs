@@ -1,27 +1,25 @@
-import { checkErrors, checksValidDate } from "../../configs/utils.mjs";
+import {
+    checkErrors,
+    checksValidDate,
+    filterArray,
+} from "../../configs/utils.mjs";
 import {
     jobRegisterSchema,
-    qualificationsSchema,
+    arraysDataSchema,
 } from "../../configs/validators.mjs";
-import { spawn } from "child_process";
+
 import {
     allJobs,
     jobById,
     qualificationByJobId,
     registerJobs,
     registerQualifications,
+    registerRequirements,
 } from "./jobs.model.mjs";
 import {
     checkEmployerById,
     employerById,
 } from "../employeer/employeer.model.mjs";
-// import { DateTime } from "luxon";
-
-// function executeJobRecommendation(script, args) {
-//     const argument = args.map((arg) => arg.toString());
-
-//     const python = spawn(script, [script, ...arguments]);
-// }
 
 export const CONTROLLER = {
     register: async (req, res) => {
@@ -64,12 +62,14 @@ export const CONTROLLER = {
         }
     },
 
-    registerQualifications: async (req, res) => {
+    register_qualifications: async (req, res) => {
         const { descriptions } = req.body;
         const { jobId } = req.params;
+
+        const filtered = filterArray(descriptions);
         try {
-            const value = await qualificationsSchema.validate(
-                { descriptions: descriptions },
+            const value = await arraysDataSchema.validate(
+                { descriptions: filtered },
                 {
                     abortEarly: false,
                 }
@@ -78,9 +78,32 @@ export const CONTROLLER = {
             res.status(200).json({ msg: "Successfully added qualifications" });
         } catch (e) {
             const errors = checkErrors(e);
-            console.log(errors);
             res.status(422).json({
                 msg: "Can't add qualifications",
+                error: errors,
+            });
+        }
+    },
+    register_requirements: async (req, res) => {
+        const { requirements } = req.body;
+        const { jobId } = req.params;
+
+        const filtered = filterArray(requirements);
+
+        try {
+            const value = await arraysDataSchema.validate(
+                { descriptions: filtered },
+                { abortEarly: false }
+            );
+
+            await registerRequirements(jobId, value.descriptions);
+
+            res.status(200).json({ msg: "Successfully added requirements" });
+        } catch (e) {
+            const errors = checkErrors(e);
+
+            res.status(422).json({
+                msg: "Can't add requirements",
                 error: errors,
             });
         }

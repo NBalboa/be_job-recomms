@@ -1,5 +1,4 @@
 import { employerRegisterSchema } from "../../configs/validators.mjs";
-// import { errorMessagesObject } from "../../configs/errorMessages.mjs";
 import { registerEmployeer } from "./employeer.model.mjs";
 import { checkErrors } from "../../configs/utils.mjs";
 const CONTROLLER = {

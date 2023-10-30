@@ -1,5 +1,9 @@
 import { connection } from "../../configs/database.mjs";
-import { getCurrentDateTime, generateID } from "../../configs/utils.mjs";
+import {
+    getCurrentDateTime,
+    generateID,
+    transformArrayToSqlData,
+} from "../../configs/utils.mjs";
 
 async function registerJobs(hiringManagerId, data) {
     const currentDateTime = getCurrentDateTime();
@@ -57,19 +61,16 @@ async function registerJobs(hiringManagerId, data) {
 }
 
 async function registerQualifications(jobsId, data) {
-    let oldId = await totalQualifications();
+    let total = await totalQualifications();
     const currentDateTime = getCurrentDateTime();
-    let baseId = oldId;
-    // console.log(newId);
-    let qualificationsData = [];
-    for (const description of data) {
-        const newId = await generateID(baseId, "qualification");
-        qualificationsData = [
-            ...qualificationsData,
-            [newId, jobsId, description, currentDateTime, currentDateTime],
-        ];
-        baseId++;
-    }
+
+    const qualificationsData = await transformArrayToSqlData(
+        total,
+        currentDateTime,
+        jobsId,
+        data,
+        "qualification"
+    );
 
     const qualificationsSQL =
         "INSERT INTO qualifications (id, job_id, description, created_at, updated_at) VALUES ?";
@@ -86,6 +87,54 @@ async function registerQualifications(jobsId, data) {
                 connection.query(
                     qualificationsSQL,
                     [qualificationsData],
+                    (err, result) => {
+                        if (err) {
+                            connection.rollback(() => {
+                                reject(err);
+                            });
+                        }
+                        connection.commit((err) => {
+                            if (err) {
+                                reject(err);
+                            }
+                            resolve(result);
+                        });
+                    }
+                );
+            });
+        });
+    });
+}
+
+async function registerRequirements(jobsId, data) {
+    const [total, current_date_time] = await Promise.all([
+        totalRequirements(),
+        getCurrentDateTime(),
+    ]);
+
+    const requirementData = await transformArrayToSqlData(
+        total,
+        current_date_time,
+        jobsId,
+        data,
+        "requirement"
+    );
+
+    const requirementSQL =
+        "INSERT INTO requirements (id, job_id, description, created_at, updated_at) VALUES ?";
+
+    return new Promise((resolve, reject) => {
+        connection.connect((err) => {
+            if (err) {
+                reject(err);
+            }
+            connection.beginTransaction((err) => {
+                if (err) {
+                    reject(err);
+                }
+                connection.query(
+                    requirementSQL,
+                    [requirementData],
                     (err, result) => {
                         if (err) {
                             connection.rollback(() => {
@@ -185,6 +234,26 @@ function totalQualifications() {
     });
 }
 
+function totalRequirements() {
+    return new Promise((resolve, reject) => {
+        connection.connect((err) => {
+            if (err) {
+                reject(err);
+            }
+            connection.query(
+                "SELECT count(*) as total_requirements FROM requirements",
+                (err, result) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(result[0].total_requirements);
+                    }
+                }
+            );
+        });
+    });
+}
+
 function qualificationByJobId(id) {
     const qualificationQuery = "SELECT * FROM qualifications WHERE job_id = ?";
     const data = [id];
@@ -212,4 +281,5 @@ export {
     allJobs,
     jobById,
     qualificationByJobId,
+    registerRequirements,
 };

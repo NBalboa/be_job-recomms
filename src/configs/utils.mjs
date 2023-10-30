@@ -10,6 +10,22 @@ function formatDateToSQLDateTime(date) {
     return DateTime.fromISO(date).toFormat("yyyy-MM-dd HH:mm:ss");
 }
 
+function formatYearToSQL(year) {
+    if (year === "") {
+        return "";
+    } else {
+        return `${year}-00-00`;
+    }
+}
+
+function formatMonthAndYearToSQL(month_year) {
+    if (month_year === "") {
+        return "";
+    } else {
+        return `${month_year}-00`;
+    }
+}
+
 function checksValidDate(date) {
     const luxonDate = DateTime.fromISO(date);
     return new Promise((resolve, reject) => {
@@ -57,13 +73,53 @@ function generateID(id, user_type) {
 function checkErrors(errors) {
     if (errors.inner?.length > 0) {
         return yupErrorsMap(errors);
-    } else if (errors.hasOwnProperty("errno") && errors.errno === 1062) {
-        return { used_email: "Email Already in used" };
+    } else if (errors.hasOwnProperty("errno")) {
+        if (errors.errno === 1062) {
+            return "Email Already in used";
+        } else if (errors.errno === 1292) {
+            return "Invalid Date";
+        } else {
+            return `mySQL error code: ${errors.errno}`;
+        }
     } else if (errors.register) {
         return errors;
     } else {
         return errors;
     }
+}
+
+async function transformArrayToSqlData(
+    total,
+    current_date_time,
+    id,
+    data,
+    id_type
+) {
+    let reference_id = total;
+    let toSqlData = [];
+
+    for (const description of data) {
+        const newId = await generateID(reference_id, id_type);
+        toSqlData = [
+            ...toSqlData,
+            [newId, id, description, current_date_time, current_date_time],
+        ];
+        reference_id++;
+    }
+
+    return new Promise((resolve) => {
+        resolve(toSqlData);
+    });
+}
+
+function filterArray(datas) {
+    const filtered = datas.filter((data) => {
+        if (typeof data === "string" && data) {
+            return data;
+        }
+    });
+
+    return filtered;
 }
 
 export {
@@ -74,4 +130,8 @@ export {
     checkErrors,
     formatDateToSQLDateTime,
     checksValidDate,
+    formatYearToSQL,
+    formatMonthAndYearToSQL,
+    transformArrayToSqlData,
+    filterArray,
 };
