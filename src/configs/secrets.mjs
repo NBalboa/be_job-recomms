@@ -13,6 +13,9 @@ const SALT_ROUNDS = process.env.SALTROUNDS
     : null;
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN ?? null;
 const REFRESH_TOKEN = process.env.REFRESH_TOKEN ?? null;
+const OTP_TOKEN = process.env.OTP_TOKEN ?? null;
+const GMAIL = process.env.GMAIL;
+const PASSWORD = process.env.PASSWORD;
 
 export {
     PORT,
@@ -23,4 +26,7 @@ export {
     SALT_ROUNDS,
     ACCESS_TOKEN,
     REFRESH_TOKEN,
+    GMAIL,
+    PASSWORD,
+    OTP_TOKEN,
 };

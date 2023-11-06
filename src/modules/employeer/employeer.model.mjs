@@ -17,7 +17,7 @@ async function registerEmployeer(data) {
 
     const [user_id, employeer_id] = await Promise.all([
         generateID(total_users[0].total_users, "user"),
-        generateID(total_employeers[0].total_employeers, "employer"),
+        generateID(total_employeers, "employer"),
     ]);
 
     const userData = [
@@ -100,7 +100,7 @@ function totalEmployeers() {
                     if (err) {
                         reject(err);
                     } else {
-                        resolve(result);
+                        resolve(result[0].total_employeers);
                     }
                 }
             );
@@ -172,4 +172,5 @@ export {
     employeerByUserId,
     checkEmployerById,
     employerById,
+    totalEmployeers,
 };

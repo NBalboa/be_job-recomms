@@ -11,6 +11,7 @@ import {
     filterArray,
     formatMonthAndYearToSQL,
     formatYearToSQL,
+    generateOTP,
 } from "../../configs/utils.mjs";
 import {
     registerApplicant,
@@ -24,6 +25,10 @@ import {
     registerApplicantExperience,
     registerSkills,
 } from "./applicant.model.mjs";
+
+import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
+import { GMAIL, PASSWORD } from "../../configs/secrets.mjs";
 
 export const CONTROLLER = {
     register: async (req, res) => {
@@ -281,6 +286,81 @@ export const CONTROLLER = {
             res.status(422).json({
                 msg: "Failed to create skills",
                 error: errors,
+                success: false,
+            });
+        }
+    },
+
+    otp: async (req, res) => {
+        const {
+            first_name,
+            last_name,
+            middle_name,
+            email,
+            password,
+            password_confirmation,
+        } = req.body;
+
+        try {
+            const value = await registerSchema.validate(
+                {
+                    first_name: first_name,
+                    last_name: last_name,
+                    middle_name: middle_name,
+                    email: email,
+                    password: password,
+                    password_confirmation: password_confirmation,
+                },
+                { abortEarly: false }
+            );
+
+            // await registerApplicant(value);
+            const GENOTP = generateOTP(5);
+            const OTP = jwt.sign({ email: email, otp: GENOTP }, GENOTP, {
+                expiresIn: "5m",
+            });
+
+            const transporter = nodemailer.createTransport({
+                service: "gmail",
+                auth: {
+                    user: GMAIL,
+                    pass: PASSWORD,
+                },
+            });
+
+            console.log(GMAIL);
+
+            const mailOptions = {
+                from: {
+                    name: "Pagadian Jobs",
+                    address: GMAIL,
+                },
+                to: email,
+                subject: "OTP",
+                text: `OTP: ${GENOTP}`,
+            };
+
+            const sendMail = async (transporter, mailOptions) => {
+                try {
+                    await transporter.sendMail(mailOptions);
+                    console.log("OTP sent");
+                } catch (error) {
+                    console.log(error);
+                }
+            };
+
+            sendMail(transporter, mailOptions);
+
+            res.json({
+                message: "OTP sent",
+                OTP: OTP,
+                success: true,
+            });
+        } catch (e) {
+            const error = checkErrors(e);
+            res.status(422).json({
+                msg: "Failed to create an account",
+                error: error,
                 success: false,
             });
         }

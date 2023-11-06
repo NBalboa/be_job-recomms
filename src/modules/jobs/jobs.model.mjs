@@ -282,4 +282,5 @@ export {
     jobById,
     qualificationByJobId,
     registerRequirements,
+    totalJobs,
 };

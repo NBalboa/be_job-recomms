@@ -1,6 +1,9 @@
 import { registerSchema } from "../../configs/validators.mjs";
 import { checkErrors } from "../../configs/utils.mjs";
 import { registerAdmin } from "./admin.model.mjs";
+import { totalEmployeers } from "../employeer/employeer.model.mjs";
+import { totalJobs } from "../jobs/jobs.model.mjs";
+import { totalApplicants } from "../applicant/applicant.model.mjs";
 
 export const CONTROLLER = {
     register: async (req, res) => {
@@ -12,7 +15,6 @@ export const CONTROLLER = {
             password,
             password_confirmation,
         } = req.body;
-        // await registerAdmin("value");
         try {
             const value = await registerSchema.validate(
                 {
@@ -38,7 +40,26 @@ export const CONTROLLER = {
                 success: false,
             });
         }
+    },
+    dashboard: async (req, res) => {
+        try {
+            const total_employeers = await totalEmployeers();
+            const total_jobs = await totalJobs();
+            const total_applicants = await totalApplicants();
 
-        // res.json({ msg: "Hi admin" });
+            res.status(200).json({
+                total: {
+                    employeers: total_employeers,
+                    jobs: total_jobs,
+                    applicants: total_applicants,
+                },
+            });
+        } catch (e) {
+            const error = checkErrors(e);
+            res.status(404).json({
+                msg: "Failed to fetch data",
+                errors: error,
+            });
+        }
     },
 };

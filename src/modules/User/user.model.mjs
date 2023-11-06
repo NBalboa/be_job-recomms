@@ -13,7 +13,7 @@ function userCredentials(email) {
                     reject(err);
                 } else {
                     if (result.length === 0) {
-                        reject({ register: "You don't have an account" });
+                        reject(result);
                     }
                     resolve(result);
                 }
@@ -82,4 +82,26 @@ function totalUsers() {
     });
 }
 
-export { userCredentials, userToken, unToken, totalUsers };
+function userRefreshToken(email) {
+    const query = "SELECT token FROM users WHERE email = ?";
+
+    return new Promise((resolve, reject) => {
+        connection.connect((err) => {
+            if (err) {
+                reject(err);
+            }
+            connection.query(query, [email], (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    if (result.length > 0) {
+                        resolve(result[0].token);
+                    }
+                    reject("Forbidden");
+                }
+            });
+        });
+    });
+}
+
+export { userCredentials, userToken, unToken, totalUsers, userRefreshToken };

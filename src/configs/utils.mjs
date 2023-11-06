@@ -2,6 +2,8 @@ import { DateTime } from "luxon";
 import bcrypt from "bcrypt";
 import { SALT_ROUNDS } from "./secrets.mjs";
 import { yupErrorsMap } from "./errorMessages.mjs";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
 const getCurrentDateTime = () => {
     return DateTime.now().toFormat("yyyy-MM-dd HH:mm:ss");
 };
@@ -75,7 +77,7 @@ function checkErrors(errors) {
         return yupErrorsMap(errors);
     } else if (errors.hasOwnProperty("errno")) {
         if (errors.errno === 1062) {
-            return "Email Already in used";
+            return { email: "Email Already in used" };
         } else if (errors.errno === 1292) {
             return "Invalid Date";
         } else {
@@ -122,6 +124,17 @@ function filterArray(datas) {
     return filtered;
 }
 
+function generateOTP(length) {
+    const buffer = crypto.randomBytes(length);
+    let otp = "";
+
+    for (let i = 0; i < length; i++) {
+        otp += buffer.readUInt8(i) % 10;
+    }
+
+    return otp;
+}
+
 export {
     getCurrentDateTime,
     hashPassword,
@@ -134,4 +147,5 @@ export {
     formatMonthAndYearToSQL,
     transformArrayToSqlData,
     filterArray,
+    generateOTP,
 };
