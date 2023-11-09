@@ -1,4 +1,7 @@
-import { registerSchema } from "../../configs/validators.mjs";
+import {
+    registerAdminSchema,
+    registerSchema,
+} from "../../configs/validators.mjs";
 import { checkErrors } from "../../configs/utils.mjs";
 import { registerAdmin } from "./admin.model.mjs";
 import { totalEmployeers } from "../employeer/employeer.model.mjs";
@@ -16,7 +19,7 @@ export const CONTROLLER = {
             password_confirmation,
         } = req.body;
         try {
-            const value = await registerSchema.validate(
+            const value = await registerAdminSchema.validate(
                 {
                     first_name: first_name,
                     last_name: last_name,

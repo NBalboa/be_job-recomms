@@ -3,6 +3,7 @@ import {
     applicantEducationSchema,
     applicantExperienceSchema,
     arraysDataSchema,
+    otpSchema,
     registerSchema,
 } from "../../configs/validators.mjs";
 // import { errorMessagesObject } from "../../configs/errorMessages.mjs";
@@ -24,11 +25,12 @@ import {
     registerApplicantEducation,
     registerApplicantExperience,
     registerSkills,
+    isEmailExist,
 } from "./applicant.model.mjs";
 
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
-import { GMAIL, PASSWORD } from "../../configs/secrets.mjs";
+import { GMAIL, OTP_TOKEN, PASSWORD } from "../../configs/secrets.mjs";
+import { setMailOptions, setTransporter } from "../../configs/emailer.mjs";
 
 export const CONTROLLER = {
     register: async (req, res) => {
@@ -39,6 +41,7 @@ export const CONTROLLER = {
             email,
             password,
             password_confirmation,
+            otp,
         } = req.body;
 
         try {
@@ -50,6 +53,7 @@ export const CONTROLLER = {
                     email: email,
                     password: password,
                     password_confirmation: password_confirmation,
+                    otp: otp,
                 },
                 { abortEarly: false }
             );
@@ -291,75 +295,48 @@ export const CONTROLLER = {
         }
     },
 
-    otp: async (req, res) => {
-        const {
-            first_name,
-            last_name,
-            middle_name,
-            email,
-            password,
-            password_confirmation,
-        } = req.body;
+    send_otp: async (req, res) => {
+        const { email } = req.body;
 
         try {
-            const value = await registerSchema.validate(
-                {
-                    first_name: first_name,
-                    last_name: last_name,
-                    middle_name: middle_name,
-                    email: email,
-                    password: password,
-                    password_confirmation: password_confirmation,
-                },
+            const is_email_exist = await isEmailExist(email);
+            const value = await otpSchema.validate(
+                { email: email },
                 { abortEarly: false }
             );
-
-            // await registerApplicant(value);
             const GENOTP = generateOTP(5);
-            const OTP = jwt.sign({ email: email, otp: GENOTP }, GENOTP, {
+            const OTP = jwt.sign({ email: email, otp: GENOTP }, OTP_TOKEN, {
                 expiresIn: "5m",
             });
 
-            const transporter = nodemailer.createTransport({
-                service: "gmail",
-                auth: {
-                    user: GMAIL,
-                    pass: PASSWORD,
-                },
-            });
+            if (!is_email_exist) {
+                const SERVICE = "gmail";
+                const TITLE = "GENERATED OTP";
+                const SUBJECT = "OTP";
+                const transporter = setTransporter(GMAIL, PASSWORD, SERVICE);
+                const mailOptions = setMailOptions(
+                    TITLE,
+                    GENOTP,
+                    email,
+                    GMAIL,
+                    SUBJECT
+                );
+                const info = await transporter.sendMail(mailOptions);
 
-            console.log(GMAIL);
-
-            const mailOptions = {
-                from: {
-                    name: "Pagadian Jobs",
-                    address: GMAIL,
-                },
-                to: email,
-                subject: "OTP",
-                text: `OTP: ${GENOTP}`,
-            };
-
-            const sendMail = async (transporter, mailOptions) => {
-                try {
-                    await transporter.sendMail(mailOptions);
-                    console.log("OTP sent");
-                } catch (error) {
-                    console.log(error);
+                if (info.messageId) {
+                    res.json({
+                        message: "Please check you email for your OTP",
+                        otp_token: OTP,
+                        success: true,
+                    });
                 }
-            };
-
-            sendMail(transporter, mailOptions);
-
-            res.json({
-                message: "OTP sent",
-                OTP: OTP,
-                success: true,
-            });
+            } else {
+                res.status(404).json({ msg: "Something went wrong" });
+            }
         } catch (e) {
             const error = checkErrors(e);
             res.status(422).json({
-                msg: "Failed to create an account",
+                msg: "Failed to send OTP",
                 error: error,
                 success: false,
             });

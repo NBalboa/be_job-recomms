@@ -15,11 +15,16 @@ export function verifyToken(req, res, next) {
 }
 
 export function verifyOTPToken(req, res, next) {
-    const { otp, email, otpToken } = req.body;
+    const { otp, email } = req.body;
+    const authHeader = req.headers["authorization"];
+    if (!authHeader) return res.status(401);
+    const token = authHeader.split(" ")[1];
 
-    jwt.verify(otpToken, OTP_TOKEN, (err, decode) => {
-        if (err && decode.email != email && decode.otp != otp) {
-            return res.status(400).json({ msg: "Invalid OTP" });
+    jwt.verify(token, OTP_TOKEN, (err, decode) => {
+        if (err || decode.email != email || decode.otp != otp) {
+            return res
+                .status(403)
+                .json({ msg: "Invalid OTP", error: { otp: "Invalid OTP" } });
         }
         next();
     });

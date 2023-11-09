@@ -4,7 +4,7 @@ import { verifyToken } from "../../middlewares/verifyToken.mjs";
 
 const app = Router();
 
-app.post("/register", CONTROLLER.register);
+app.post("/register", verifyToken, CONTROLLER.register);
 app.get("/dashboard", verifyToken, CONTROLLER.dashboard);
 
 export default app;

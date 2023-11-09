@@ -16,6 +16,25 @@ const registerSchema = yup.object().shape({
         .string()
         .required("Confirm Password is required")
         .oneOf([yup.ref("password"), null], "Passwords must be match"),
+    otp: yup.string().required("OTP is required"),
+});
+
+const registerAdminSchema = yup.object().shape({
+    first_name: yup.string().required("Please Enter First Name"),
+    last_name: yup.string().required("Please Enter Last Name"),
+    middle_name: yup.string(),
+    email: yup
+        .string()
+        .email("Please Enter Valid Email")
+        .required("Please Enter Email"),
+    password: yup
+        .string()
+        .required("Password is required")
+        .min(8, "Password must be at least 8 characters long"),
+    password_confirmation: yup
+        .string()
+        .required("Confirm Password is required")
+        .oneOf([yup.ref("password"), null], "Passwords must be match"),
 });
 
 const employerRegisterSchema = yup.object().shape({
@@ -138,7 +157,12 @@ const applicantExperienceSchema = yup.object().shape({
     end_date: yup.string().required("Start Date is Required"),
 });
 
+const otpSchema = yup.object().shape({
+    email: yup.string().required("Email is Required"),
+});
+
 export {
+    otpSchema,
     applicantAddressSchema,
     applicantEducationSchema,
     applicantExperienceSchema,
@@ -149,4 +173,5 @@ export {
     jobRegisterSchema,
     arraysDataSchema,
     applicantSkillsSchema,
+    registerAdminSchema,
 };

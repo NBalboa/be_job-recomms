@@ -7,6 +7,7 @@ import {
 import { totalUsers } from "../user/user.model.mjs";
 
 async function registerAdmin(data) {
+    const current_date_time = getCurrentDateTime();
     const role = "admin";
     const [total_admins, total_users, password] = await Promise.all([
         totalAdmins(),
@@ -24,8 +25,8 @@ async function registerAdmin(data) {
         data.email,
         password,
         role,
-        getCurrentDateTime(),
-        getCurrentDateTime(),
+        current_date_time,
+        current_date_time,
     ];
 
     return new Promise((resolve, reject) => {
@@ -52,8 +53,8 @@ async function registerAdmin(data) {
                         data.first_name,
                         data.last_name,
                         data.middle_name,
-                        getCurrentDateTime(),
-                        getCurrentDateTime(),
+                        current_date_time,
+                        current_date_time,
                     ];
 
                     connection.query(adminSQL, adminData, (err, result) => {

@@ -584,6 +584,25 @@ function totalPermanentAddress() {
     });
 }
 
+function isEmailExist(email) {
+    const check_email_sql =
+        "SELECT count(*) as is_email_exist FROM users WHERE email = ?";
+    const data = [email];
+    return new Promise((resolve, reject) => {
+        connection.connect((err) => {
+            connection.query(check_email_sql, data, (err, result) => {
+                if (err) {
+                    reject(err);
+                } else if (result[0].is_email_exist > 0) {
+                    reject({ email: "Email already in used" });
+                } else {
+                    resolve(false);
+                }
+            });
+        });
+    });
+}
+
 export {
     registerApplicant,
     deleteApplicant,
@@ -597,4 +616,5 @@ export {
     registerApplicantExperience,
     registerSkills,
     totalApplicants,
+    isEmailExist,
 };
